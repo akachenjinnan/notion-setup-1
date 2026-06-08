@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notion 一键建库 · 把能量还给自己</title>
+<style>
+:root{
+  --bg:#FAF9F6;--bg2:#F3F1EC;--bg3:#ECEAE3;
+  --green:#8FA68E;--gl:#D4E0D3;--gd:#5C7A5B;
+  --text:#3D3D3D;--t2:#7A7A7A;--t3:#AEAEAE;
+  --warm:#C4A882;--wl:#EDE0CF;
+  --red:#D4907A;--rl:#F2DDD6;
+  --r:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px 60px}
+.card{width:100%;max-width:560px}
+
+h1{font-size:22px;font-weight:400;margin-bottom:6px;color:var(--text)}
+.sub{font-size:13px;color:var(--t3);margin-bottom:32px;font-style:italic}
+
+.step{background:var(--bg2);border-radius:var(--r);padding:22px 24px;margin-bottom:14px}
+.step-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.step-num{width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-title{font-size:15px;font-weight:400}
+.step-desc{font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:14px}
+.step-desc a{color:var(--gd);text-decoration:none;border-bottom:1px solid var(--gl)}
+.step-desc a:hover{border-bottom-color:var(--gd)}
+
+label{display:block;font-size:11px;color:var(--t3);letter-spacing:.08em;margin-bottom:6px}
+input[type=text],input[type=password]{
+  width:100%;padding:12px 14px;border:1px solid var(--bg3);border-radius:10px;
+  background:var(--bg);font-size:14px;color:var(--text);outline:none;
+  font-family:inherit;transition:border .2s;
+}
+input:focus{border-color:var(--green)}
+input::placeholder{color:var(--t3)}
+
+.tip{font-size:12px;color:var(--t3);margin-top:8px;line-height:1.6;padding:10px 13px;background:var(--bg3);border-radius:8px}
+.tip code{background:rgba(0,0,0,.07);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:11px}
+
+.run-btn{
+  width:100%;padding:17px;background:var(--green);color:#fff;border:none;border-radius:var(--r);
+  font-size:16px;font-family:inherit;cursor:pointer;transition:background .2s;margin-top:6px;
+  letter-spacing:.04em;
+}
+.run-btn:hover{background:var(--gd)}
+.run-btn:disabled{background:var(--t3);cursor:not-allowed}
+
+/* LOG */
+.log-wrap{display:none;margin-top:14px;background:#1C1C1E;border-radius:var(--r);padding:18px 20px;max-height:320px;overflow-y:auto}
+.log-wrap.show{display:block}
+.log-line{font-size:13px;line-height:1.8;font-family:monospace;white-space:pre-wrap;word-break:break-all}
+.log-line.ok{color:#8FD897}
+.log-line.err{color:#F4907A}
+.log-line.info{color:#C8C4BC}
+.log-line.dim{color:#6A6A6A}
+
+/* DONE CARD */
+.done-card{display:none;margin-top:14px;background:var(--gl);border-radius:var(--r);padding:24px;text-align:center}
+.done-card.show{display:block}
+.done-card h2{font-size:18px;font-weight:400;color:var(--gd);margin-bottom:8px}
+.done-card p{font-size:13px;color:var(--t2);line-height:1.7}
+.done-card .next{margin-top:16px;text-align:left;background:white;border-radius:10px;padding:16px 18px}
+.done-card .next-title{font-size:11px;color:var(--t3);letter-spacing:.1em;margin-bottom:10px}
+.next-step{display:flex;gap:10px;align-items:flex-start;padding:6px 0;font-size:13px;color:var(--text);line-height:1.5}
+.next-step .n{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <h1>🌿 Notion 一键建库</h1>
+  <p class="sub">把能量还给自己 · 每日节奏管理</p>
+
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="step-head">
+      <div class="step-num">1</div>
+      <div class="step-title">获取 Notion Token</div>
+    </div>
+    <div class="step-desc">
+      打开 <a href="https://www.notion.so/my-integrations" target="_blank">notion.so/my-integrations</a>
+      → 点「<strong>+ New integration</strong>」→ 名字填「我的节奏」→ 点 Submit
+      → 复制「<strong>Internal Integration Secret</strong>」（<code>ntn_</code> 开头）粘贴到下方
+    </div>
+    <label>Integration Token</label>
+    <input type="password" id="token" placeholder="ntn_xxxxxxxxxxxxxxxxxxxxxxxx">
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="step-head">
+      <div class="step-num">2</div>
+      <div class="step-title">创建父页面并连接 Integration</div>
+    </div>
+    <div class="step-desc">
+      在 Notion 新建一个空白页面，命名「<strong>我的节奏空间</strong>」<br>
+      → 右上角 <code>···</code> → <strong>Connections</strong> → 搜索「我的节奏」→ Connect<br>
+      → 从浏览器地址栏复制页面 ID（URL 最后的 32 位字符）
+    </div>
+    <label>页面 ID（32位，可带连字符）</label>
+    <input type="text" id="page-id" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+    <div class="tip">
+      地址栏示例：<code>notion.so/My-Space-<strong>8a1b2c3d4e5f...</strong></code><br>
+      复制最后那段，有没有连字符都可以。
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="step-head">
+      <div class="step-num">3</div>
+      <div class="step-title">一键建库</div>
+    </div>
+    <div class="step-desc">填好以上两项后，点下方按钮，自动建好所有内容（约 10 秒）。</div>
+    <button class="run-btn" id="run-btn" onclick="runSetup()">开始建库 →</button>
+  </div>
+
+  <!-- LOG -->
+  <div class="log-wrap" id="log-wrap"></div>
+
+  <!-- DONE -->
+  <div class="done-card" id="done-card">
+    <h2>✅ 全部建好了</h2>
+    <p>「每日记录」数据库、模板示例页、使用说明页<br>已经在你的 Notion 里了。</p>
+    <div class="next">
+      <div class="next-title">接下来做这几件事</div>
+      <div class="next-step"><div class="n">1</div><div>打开 Notion，进入「每日记录」数据库，找到示例页 → 右上角 <code>···</code> → <strong>Turn into template</strong> → 设为默认模板</div></div>
+      <div class="next-step"><div class="n">2</div><div>在数据库右上角点「+ Add a view」，加一个<strong>日历视图</strong>和一个<strong>看板视图（按情绪分组）</strong></div></div>
+      <div class="next-step"><div class="n">3</div><div>iPhone 下载 Notion app → 收藏「每日记录」数据库 → 每天早上点 New 开始新的一天</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const NOTION_VERSION = "2022-06-28";
+
+let token = "", parentId = "";
+
+function log(msg, type="info"){
+  const wrap = document.getElementById('log-wrap');
+  wrap.classList.add('show');
+  const line = document.createElement('div');
+  line.className = `log-line ${type}`;
+  line.textContent = msg;
+  wrap.appendChild(line);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+async function notionAPI(method, path, body){
+  const resp = await fetch(`https://api.notion.com/v1${path}`, {
+    method,
+    headers:{
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "Notion-Version": NOTION_VERSION,
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await resp.json();
+  if(!resp.ok){
+    throw new Error(data.message || `HTTP ${resp.status}`);
+  }
+  return data;
+}
+
+function cleanId(raw){
+  return raw.trim().replace(/-/g,'').replace(/.*([a-f0-9]{32})$/i,'$1');
+}
+
+async function runSetup(){
+  token = document.getElementById('token').value.trim();
+  const rawId = document.getElementById('page-id').value.trim();
+  parentId = cleanId(rawId);
+
+  document.getElementById('log-wrap').innerHTML = '';
+  document.getElementById('done-card').classList.remove('show');
+
+  if(!token || !token.startsWith('ntn_')){
+    log('⚠️  Token 格式不对，应该是 ntn_ 开头，请重新检查。','err'); return;
+  }
+  if(parentId.length < 32){
+    log('⚠️  页面 ID 看起来不完整，应该是 32 个字符，请重新检查。','err'); return;
+  }
+
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true; btn.textContent = '建库中…';
+
+  try{
+    // 1. verify token
+    log('① 验证 Token...','dim');
+    const me = await notionAPI("GET","/users/me");
+    log(`  ✓ 连接成功，用户：${me.name||'(已连接)'}`, 'ok');
+
+    // 2. create database
+    log('\n② 创建「每日记录」数据库...','dim');
+    const dbId = await createDatabase();
+    log(`  ✓ 数据库建好了`, 'ok');
+
+    // 3. create template page
+    log('\n③ 创建今日模板示例页...','dim');
+    const pageUrl = await createTemplatePage(dbId);
+    log(`  ✓ 模板示例页建好了`, 'ok');
+    log(`  → ${pageUrl}`, 'dim');
+
+    // 4. instructions page
+    log('\n④ 创建使用说明页...','dim');
+    await createInstructionsPage();
+    log(`  ✓ 使用说明页建好了`, 'ok');
+
+    log('\n─────────────────────────────','dim');
+    log('✅ 全部完成！打开 Notion 查看吧。','ok');
+    document.getElementById('done-card').classList.add('show');
+
+  } catch(e){
+    log(`\n✗ 出错了：${e.message}`, 'err');
+    log('请检查 Token 是否正确，以及页面是否已连接 Integration。','err');
+  }
+
+  btn.disabled = false; btn.textContent = '开始建库 →';
+}
+
+async function createDatabase(){
+  const emoOptions = [
+    {name:"平静",color:"blue"},{name:"充实",color:"green"},
+    {name:"开心",color:"yellow"},{name:"疲惫",color:"gray"},
+    {name:"焦虑",color:"orange"},{name:"混乱",color:"pink"},
+    {name:"低落",color:"purple"},{name:"期待",color:"default"},
+  ];
+
+  const props = {
+    // 核心
+    "日期":       {date:{}},
+    "情绪":       {select:{options:emoOptions}},
+    "完成率(%)":  {number:{format:"percent"}},
+    // 睡眠
+    "入睡时间":   {rich_text:{}},
+    "起床时间":   {rich_text:{}},
+    "睡眠时长(h)":{number:{format:"number"}},
+    // 生活
+    "按时起床":       {checkbox:{}},
+    "晨间散步/晒太阳":{checkbox:{}},
+    "吃早餐":         {checkbox:{}},
+    "喝水":           {checkbox:{}},
+    "睡前放松":       {checkbox:{}},
+    "12点前睡觉":     {checkbox:{}},
+    // 身体
+    "快走":           {checkbox:{}},
+    "室内walking":    {checkbox:{}},
+    "拉伸/瑜伽":      {checkbox:{}},
+    "肩颈放松":       {checkbox:{}},
+    // 工作
+    "深度工作":       {checkbox:{}},
+    "按时收工":       {checkbox:{}},
+    "学习/研究":      {checkbox:{}},
+    "数据复盘":       {checkbox:{}},
+    "非情绪化工作":   {checkbox:{}},
+    // 心
+    "没有过度刷手机": {checkbox:{}},
+    "没有陷入内耗":   {checkbox:{}},
+    "情绪记录":       {checkbox:{}},
+    "今日感恩":       {checkbox:{}},
+    "今日自我认可":   {checkbox:{}},
+    // 文字
+    "今日感恩(内容)":     {rich_text:{}},
+    "今日自我认可(内容)": {rich_text:{}},
+    "情绪备注":           {rich_text:{}},
+    "今天完成了什么":     {rich_text:{}},
+    "今天状态不错的原因": {rich_text:{}},
+    "明日三件事":         {rich_text:{}},
+  };
+
+  // format parentId with dashes
+  const pid = parentId.replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/,'$1-$2-$3-$4-$5');
+
+  const r = await notionAPI("POST","/databases",{
+    parent:{type:"page_id", page_id: pid},
+    icon:{type:"emoji",emoji:"🌿"},
+    title:[{type:"text",text:{content:"每日记录"}}],
+    properties: props,
+  });
+  return r.id;
+}
+
+async function createTemplatePage(dbId){
+  const today = new Date().toISOString().slice(0,10);
+  const blocks = [
+    h2block("今日最重要的三件事","gray_background"),
+    todo("今天最重要的事"),
+    todo("第二重要的事"),
+    todo("第三件事"),
+    divider(),
+    h2block("🌿 此刻感受","gray_background"),
+    para([bold("情绪 → "),gray("（在右侧属性栏选择）")]),
+    para([bold("此刻想说的：")]),
+    para([plain("")]),
+    para([bold("今天为自己做了一件小事：")]),
+    para([plain("")]),
+    divider(),
+    h2block("🌙 关闭今天","gray_background"),
+    callout("💡","早上起来填睡眠时间（右侧属性栏），晚上再填这里。","gray_background"),
+    para([bold("今天完成了什么：")]),
+    para([plain("")]),
+    para([bold("今天什么让我状态不错：")]),
+    para([plain("")]),
+    h3block("明天最重要的 3 件事"),
+    numbered(""),
+    numbered(""),
+    numbered(""),
+    divider(),
+    quote("今天的行动比昨天的焦虑更真实。"),
+  ];
+
+  const r = await notionAPI("POST","/pages",{
+    parent:{database_id: dbId},
+    icon:{type:"emoji",emoji:"🌿"},
+    properties:{
+      "日期":      {date:{start:today}},
+      "情绪":      {select:{name:"平静"}},
+      "完成率(%)": {number:0},
+    },
+    children: blocks,
+  });
+  return r.url;
+}
+
+async function createInstructionsPage(){
+  const pid = parentId.replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/,'$1-$2-$3-$4-$5');
+  const blocks = [
+    h1block("把能量还给自己 · 使用说明"),
+    divider(),
+    h2block("每天怎么用（3步）","default"),
+    numbered2("早上（2分钟）：打开「每日记录」→ 点 New → 自动套用模板 → 填日期、睡眠时间、今日三件事"),
+    numbered2("白天随时：完成一项就在右侧属性栏勾选对应 checkbox"),
+    numbered2("晚上（5分钟）：填晚间关闭三个问题 → 选情绪标签 → 填完成率 → 填明日三件事"),
+    divider(),
+    h2block("建议加的视图","default"),
+    bullet("📅 日历视图（Calendar）— 按月查看，每天显示情绪 + 完成率"),
+    bullet("🗂 看板视图（Board，按情绪分组）— 直观看哪种状态最多"),
+    bullet("📊 表格视图（Table）— 所有数据横排，可按睡眠/完成率排序筛选"),
+    bullet("📋 列表视图（List）— 近期记录简洁列表"),
+    divider(),
+    h2block("把示例页设为模板","default"),
+    para([plain("找到「每日记录」数据库里的示例页 → 右上角 ··· → Turn into template → 设为默认。之后每次 New 自动套用。")]),
+    divider(),
+    callout("💡","免费版数据库视图上限 100 行，约 3 个月后新建数据库接续，旧数据永久保留。","yellow_background"),
+  ];
+
+  await notionAPI("POST","/pages",{
+    parent:{type:"page_id", page_id: pid},
+    icon:{type:"emoji",emoji:"📖"},
+    properties:{title:{title:[{type:"text",text:{content:"使用说明"}}]}},
+    children: blocks,
+  });
+}
+
+// ─── Block helpers ───
+function h1block(t){return{object:"block",type:"heading_1",heading_1:{rich_text:[{type:"text",text:{content:t}}]}}}
+function h2block(t,color="default"){return{object:"block",type:"heading_2",heading_2:{rich_text:[{type:"text",text:{content:t}}],color}}}
+function h3block(t){return{object:"block",type:"heading_3",heading_3:{rich_text:[{type:"text",text:{content:t}}]}}}
+function para(parts){return{object:"block",type:"paragraph",paragraph:{rich_text:parts}}}
+function todo(t){return{object:"block",type:"to_do",to_do:{rich_text:[{type:"text",text:{content:t}}],checked:false}}}
+function divider(){return{object:"block",type:"divider",divider:{}}}
+function callout(emoji,t,color){return{object:"block",type:"callout",callout:{rich_text:[{type:"text",text:{content:t}}],icon:{type:"emoji",emoji},color}}}
+function quote(t){return{object:"block",type:"quote",quote:{rich_text:[{type:"text",text:{content:t},annotations:{italic:true,color:"gray"}}]}}}
+function numbered(t){return{object:"block",type:"numbered_list_item",numbered_list_item:{rich_text:[{type:"text",text:{content:t}}]}}}
+function numbered2(t){return{object:"block",type:"numbered_list_item",numbered_list_item:{rich_text:[{type:"text",text:{content:t}}]}}}
+function bullet(t){return{object:"block",type:"bulleted_list_item",bulleted_list_item:{rich_text:[{type:"text",text:{content:t}}]}}}
+function plain(t){return{type:"text",text:{content:t}}}
+function bold(t){return{type:"text",text:{content:t},annotations:{bold:true}}}
+function gray(t){return{type:"text",text:{content:t},annotations:{color:"gray",italic:true}}}
+</script>
+</body>
+</html>
